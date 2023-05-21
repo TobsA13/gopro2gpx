@@ -68,24 +68,24 @@ def BuildGPSPoints(tracks, skip=False):
 
     final_points = []
     start_time = None
-    SCAL = fourCC.XYZData(1.0, 1.0, 1.0)
-    GPSU = None
-    SYST = fourCC.SYSTData(0, 0)
-
-    stats = {
-        'ok': 0,
-        'badfix': 0,
-        'badfixskip': 0,
-        'empty' : 0
-    }
-
-    GPSFIX = 0 # no lock.
-    TSMP = 0
     DVNM = set()
 
     for track in tracks:
         points = []
         device = "Unknown"
+        stats = {
+            'ok': 0,
+            'badfix': 0,
+            'badfixskip': 0,
+            'empty' : 0
+        }
+
+        SCAL = fourCC.XYZData(1.0, 1.0, 1.0)
+        GPSU = None
+        SYST = fourCC.SYSTData(0, 0)
+
+        GPSFIX = 0  # no lock.
+        TSMP = 0
         for d in track[1]:
             if d.fourCC == 'SCAL':
                 SCAL = d.data

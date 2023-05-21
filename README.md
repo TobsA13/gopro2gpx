@@ -66,7 +66,7 @@ My idea is process the file in python, extract the data, and build a file in a k
    a) Install via pip (with git installed):
 
    ```
-   pip install git+https://github.com/juanmcasillas/gopro2gpx
+   pip install git+https://github.com/TobsA13/gopro2gpx.git
    ```
 
    b) *Or* Download the repository, unpack it and instal with
