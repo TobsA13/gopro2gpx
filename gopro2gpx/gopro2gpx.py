@@ -86,6 +86,8 @@ def BuildGPSPoints(tracks, skip=False):
 
         GPSFIX = 0  # no lock.
         TSMP = 0
+
+        print(f"-- stats -- {track[0]}")
         for d in track[1]:
             if d.fourCC == 'SCAL':
                 SCAL = d.data
@@ -168,8 +170,6 @@ def BuildGPSPoints(tracks, skip=False):
         final_points.append([track[0], points])
         if device not in DVNM:
             DVNM.add(device)
-
-        print(f"-- stats -- {track[0]}")
         total_points = 0
         for i in stats.keys():
             total_points += stats[i]
