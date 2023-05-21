@@ -10,7 +10,6 @@
 import struct
 from datetime import datetime
 import collections
-import copy
 
 maptype = { 'c': 'c',
 			'L': 'L',

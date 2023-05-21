@@ -14,8 +14,6 @@
 
 import array
 import os
-import struct
-import sys
 
 from .klvdata import KLVData
 

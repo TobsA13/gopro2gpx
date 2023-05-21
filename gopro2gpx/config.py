@@ -9,9 +9,6 @@
 import os
 import configparser
 import platform
-import sys
-import subprocess
-import re
 
 class Config:
     def __init__(self, verbose=0, outputfile=None):

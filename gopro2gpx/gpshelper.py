@@ -48,14 +48,14 @@ def CSVTime(timedata):
     csvtime = csvtime[:-3]
     return csvtime
 
-def generate_GPX(points, start_time=None, trk_name="exercise"):
+def generate_GPX(tracks, start_time=None, trk_name="exercise"):
 
     """
     Creates a GPX in 1.1 Format
     """
 
     if start_time is None:
-        start_time = points[0].time
+        start_time = tracks[0][1][0].time
 
     xml  = '<?xml version="1.0" encoding="UTF-8"?>\r\n'
     gpx_attr = [
@@ -89,55 +89,49 @@ def generate_GPX(points, start_time=None, trk_name="exercise"):
     xml += "<gpx " + " ".join(gpx_attr) + ">\r\n"
 
     xml += "<metadata>\r\n"
+    xml += "  <name>%s</name>\r\n" % trk_name
+    xml += "  <author><name>gopro2gpx</name></author>\r\n"
     xml += "  <time>%s</time>\r\n" % UTCTime(start_time)
     xml += "</metadata>\r\n"
-    xml += "<trk>\r\n"
-    xml += "  <name>%s</name>\r\n" % trk_name
-    xml += "<trkseg>\r\n"
 
-    #
-    # add the points
-    #
+    for track in tracks:
+        xml += "<trk>\r\n"
+        xml += "  <name>%s</name>\r\n" % track[0]
+        xml += "<trkseg>\r\n"
 
-    #  <trkpt lat="40.327363333" lon="-3.760243333">
-    #    <time>2014-06-26T18:40:45Z</time>
-    #    <fix>2d</fix>
-    #    <sat>7</sat>
-    #  </trkpt>
+        for p in track[1]:
+            hr = p.hr
+            cadence = p.cad
+            speed = p.speed
+            distance = p.distance
 
-    for p in points:
-        hr = p.hr
-        cadence = p.cad
-        speed = p.speed
-        distance = p.distance
+            pts  = '	<trkpt lat="%s" lon="%s">\r\n' % (p.latitude, p.longitude)
+            pts += '		<ele>%s</ele>\r\n' % p.elevation
+            pts += '		<time>%s</time>\r\n' % UTCTime(p.time)
+            pts += '		<extensions>\r\n'
+            pts += '		<gpxtpx:TrackPointExtension>\r\n'
+            pts += '		    <gpxtpx:hr>%s</gpxtpx:hr>\r\n' % hr
+            pts += '		    <gpxtpx:cad>%s</gpxtpx:cad>\r\n' % cadence
+            pts += '		    <gpxtpx:speed>%s</gpxtpx:speed>\r\n' % speed
+            pts += '		    <gpxtpx:distance>%s</gpxtpx:distance>\r\n' % distance
+            pts += '		   </gpxtpx:TrackPointExtension>\r\n'
+            pts += '		<gpxx:TrackPointExtension/>\r\n' ## new
+            #pts += '        <power>%s</power>\r\n' % power
+            #pts += '        <<gpxtpx:temp>%s</temp>\r\n'   % temperature
+            pts += '		</extensions>\r\n'
+            pts += '	</trkpt>\r\n'
 
-        pts  = '	<trkpt lat="%s" lon="%s">\r\n' % (p.latitude, p.longitude)
-        pts += '		<ele>%s</ele>\r\n' % p.elevation
-        pts += '		<time>%s</time>\r\n' % UTCTime(p.time)
-        pts += '		<extensions>\r\n'
-        pts += '		<gpxtpx:TrackPointExtension>\r\n'
-        pts += '		    <gpxtpx:hr>%s</gpxtpx:hr>\r\n' % hr
-        pts += '		    <gpxtpx:cad>%s</gpxtpx:cad>\r\n' % cadence
-        pts += '		    <gpxtpx:speed>%s</gpxtpx:speed>\r\n' % speed
-        pts += '		    <gpxtpx:distance>%s</gpxtpx:distance>\r\n' % distance
-        pts += '		   </gpxtpx:TrackPointExtension>\r\n'
-        pts += '		<gpxx:TrackPointExtension/>\r\n' ## new
-    	#pts += '        <power>%s</power>\r\n' % power
-    	#pts += '        <<gpxtpx:temp>%s</temp>\r\n'   % temperature
-        pts += '		</extensions>\r\n'
-        pts += '	</trkpt>\r\n'
+            xml += pts
 
-        xml += pts
-
-    xml += "</trkseg>\r\n"
-    xml += "</trk>\r\n"
+        xml += "</trkseg>\r\n"
+        xml += "</trk>\r\n"
     xml += "</gpx>\r\n"
 
     return xml
 
 
 
-def generate_KML(gps_points):
+def generate_KML(tracks, trk_name="exercise"):
     """
 
     use this for color
@@ -145,10 +139,10 @@ def generate_KML(gps_points):
 
     """
 
-    kml_template = """<?xml version="1.0" encoding="UTF-8"?>
+    kml_template = f"""<?xml version="1.0" encoding="UTF-8"?>
     <kml xmlns="http://www.opengis.net/kml/2.2"> <Document>
-    <name>Demo</name>
-    <description>Description Demo</description>
+    <name>gopro2gpx</name>
+    <description>Device: {trk_name}</description>
     <Style id="yellowLineGreenPoly">
         <LineStyle>
             <color>FF1400BE</color>
@@ -158,44 +152,48 @@ def generate_KML(gps_points):
             <color>7f00ff00</color>
         </PolyStyle>
     </Style>
-    <Placemark>
-        <name>Track Title</name>
-        <description>Track Description</description>
-        <styleUrl>#yellowLineGreenPoly</styleUrl>
-        <LineString>
-            <extrude>1</extrude>
-            <tessellate>1</tessellate>
-            <altitudeMode>absolute</altitudeMode>
-            <coordinates>
-                %s
-            </coordinates>
-        </LineString>
-    </Placemark>
+    %s
     </Document>
     </kml>
     """
 
+    data = ""
+    for track in tracks:
+        lines = []
+        for p in track[1]:
+            s = "%s,%s,%s" % (p.longitude, p.latitude, p.elevation)
+            lines.append(s)
+        coords = os.linesep.join(lines)
 
-    lines = []
-    for p in gps_points:
-        s = "%s,%s,%s" % (p.longitude, p.latitude, p.elevation)
-        lines.append(s)
-
-    coords = os.linesep.join(lines)
-    kml = kml_template % coords
+        track_template = f"""
+        <Placemark>
+            <name>{track[0]}</name>
+            <styleUrl>#yellowLineGreenPoly</styleUrl>
+            <LineString>
+                <extrude>1</extrude>
+                <tessellate>1</tessellate>
+                <altitudeMode>absolute</altitudeMode>
+                <coordinates>
+                    {coords}
+                </coordinates>
+            </LineString>
+        </Placemark>
+        """
+        data += track_template
+    kml = kml_template % data
     return(kml)
 
 
-def generate_CSV(gps_points):
-    csv_template = """DashWare GPX CSV File
-Time,Latitude,Longitude,Elevation,AirTemp,HeartRate,Cadence,Power,Roll,Pitch
+def generate_CSV(tracks):
+    csv_template = """Time,Latitude,Longitude,Elevation,AirTemp,HeartRate,Cadence,Power,Roll,Pitch
 %s"""
 
 
     lines = []
-    for p in gps_points:
-        s = "%s,%s,%s,%s,%s" % (CSVTime(p.time), p.latitude, p.longitude, p.elevation, ',,,,,')
-        lines.append(s)
+    for track in tracks:
+        for p in track[1]:
+            s = "%s,%s,%s,%s,%s" % (CSVTime(p.time), p.latitude, p.longitude, p.elevation, ',,,,,')
+            lines.append(s)
 
     coords = os.linesep.join(lines)
     csv = csv_template % coords
